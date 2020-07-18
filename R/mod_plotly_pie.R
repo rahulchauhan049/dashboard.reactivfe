@@ -24,7 +24,14 @@ mod_plotly_pie_ui <- function(id){
 mod_plotly_pie_server <- function(input, output, session, data_reactive, data_original, column_name){
   ns <- session$ns
   
-  field <- callModule(mod_field_selection_server, "field_selection_ui_1", "pie", data_reactive, data_original)
+  field <- callModule(
+    mod_field_selection_server,
+    "field_selection_ui_1", 
+    "pie", 
+    data_reactive,
+    data_original,
+    list("x"=column_name)
+  )
   
  
   output$plot <- renderPlotly({

@@ -20,17 +20,23 @@ mod_plotly_bubble_ui <- function(id){
 #' plotly_bubble Server Function
 #'
 #' @noRd 
-mod_plotly_bubble_server <- function(input, output, session, data_reactive, data_original, column_name, column_name_y){
+mod_plotly_bubble_server <- function(input, output, session, data_reactive, data_original, column_name=NULL, column_name_y=NULL, default_group=NULL){
   ns <- session$ns
   
-  field <- callModule(mod_field_selection_server, "field_selection_ui_1", "bubble", data_reactive, data_original)
+  
+  
+  field <- callModule(
+    mod_field_selection_server,
+    "field_selection_ui_1", 
+    "bubble", data_reactive,
+    data_original,
+    list("x"=column_name, "y"=column_name_y),
+    default_group
+    )
   
   output$plot <- renderPlotly({
     if(!is.null(field$xval())){
-      d <- data_reactive$data[c(field$xval(), field$yval())]
-      colnames(d) <- c("x", "y")
-      d <- as.data.frame(table(d))
-      d <- d %>% filter(Freq > 0) %>% droplevels()
+      d <- find_two_column_frequency(data_reactive$data, field$xval(), field$yval())
       
       plot_ly(d, x = ~x, y = ~y, type = 'scatter', mode = 'markers', size = ~Freq, color = ~x, colors = 'Paired',
               sizes = c(10, 50),

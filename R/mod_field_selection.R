@@ -10,23 +10,66 @@
 mod_field_selection_ui <- function(id){
   ns <- NS(id)
   fluidRow(
-    uiOutput(ns("choose_dataset")),
-    verbatimTextOutput(ns("r"))
+    column(
+      3,
+      selectInput(ns("group"), "Select Group", NULL)
+    ),
+    column(
+      9,
+      uiOutput(ns("choose_dataset")),
+    )
   )
 }
     
 #' field_selection Server Function
 #'
 #' @noRd 
-mod_field_selection_server <- function(input, output, session, graph_name, data_reactive, data_original){
+mod_field_selection_server <- function(input, output, session, graph_name, data_reactive, data_original, default_field=NULL, default_group=NULL){
   ns <- session$ns
   
+  dictionary <- read.csv("data/dictionary.csv")
+
+  
   fields <- list()
+  
+  observe({
+    group_list <- create_group(dictionary, data_reactive$data)
+    if(is.null(default_group)){
+      default_group = names(group_list)[1]
+    }
+    updateSelectInput(
+      session,
+      "group",
+      choices = names(group_list),
+      selected = default_group
+      )
+  }
+  )
   
   
   if(graph_name == "bubble" || graph_name == "line"){
     output$choose_dataset <- renderUI({
-      temp <- find_fields("bubble", data_reactive$data)
+      group_list <- create_group(dictionary, data_reactive$data)
+      temp <- find_fields("bubble", data_reactive$data, group_list, input$group)
+      
+      if(is.null(default_field$x)){
+        default_field$x <- temp[1]
+      }
+      
+      if(is.null(default_field$y)){
+        default_field$y <- temp[1]
+      }
+      
+      if(!(default_field$x %in% temp$x)){
+        default_field$x <- temp[1]
+      }
+      
+      if(!(default_field$y %in% temp$y)){
+        default_field$y <- temp[1]
+      }
+      
+      
+      
       lapply(names(temp), function(i) {
         fields[[i]] <- (paste0("field_", i))
         column(
@@ -34,7 +77,8 @@ mod_field_selection_server <- function(input, output, session, graph_name, data_
           selectInput(
             inputId = ns(paste0("field_", i)),
             label = paste0("Column: ", i),
-            choices = temp[[i]]
+            choices = temp[[i]],
+            selected = default_field[i]
           )
         )
       })
@@ -51,6 +95,15 @@ mod_field_selection_server <- function(input, output, session, graph_name, data_
     
     output$choose_dataset <- renderUI({
       temp <- find_fields("pie", data_reactive$data)
+      
+      if(is.null(default_field$x)){
+        default_field$x <- temp[1]
+      }
+      
+      if(!(default_field$x %in% temp$x)){
+        default_field$x <- temp[1]
+      }
+      
       lapply(names(temp), function(i) {
         fields[[i]] <- (paste0("field_", i))
         column(
@@ -58,7 +111,8 @@ mod_field_selection_server <- function(input, output, session, graph_name, data_
           selectInput(
             inputId = ns(paste0("field_", i)),
             label = paste0("Column: ", i),
-            choices = temp[[i]]
+            choices = temp[[i]],
+            selected = default_field[i]
           )
         )
       })
@@ -72,23 +126,6 @@ mod_field_selection_server <- function(input, output, session, graph_name, data_
     
   }
 }
-
-find_fields <- function(plot, data){
-  columns <- list()
-  if(plot == "bubble" || plot == "line"){
-    columns$x <- c("genus", "scientificName", "kingdom", "phylum", "order", "family", "species")
-    # columns$x <- names(dplyr::select_if(data,is.character))
-    columns$y <- c(
-      "year",
-      "day",
-      "month"
-    )
-  } else if(plot == "pie" || plot == "bar"){
-    columns$x <-  c("genus", "scientificName", "kingdom", "phylum", "order", "family", "species")
-  }
-  return(columns)
-}
-
     
 ## To be copied in the UI
 # mod_field_selection_ui("field_selection_ui_1")

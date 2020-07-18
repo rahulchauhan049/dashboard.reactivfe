@@ -33,6 +33,9 @@ golem::add_module( name = "field_selection" ) # Name of the module
 ## Add helper functions ----
 ## Creates ftc_* and utils_*
 golem::add_fct( "create_group" ) 
+golem::add_fct( "find_fields" ) 
+golem::add_fct( "find_two_column_frequency" ) 
+golem::add_fct( "yearly_trend_of_names" ) 
 golem::add_utils( "helpers" )
 
 ## External resources
@@ -47,7 +50,11 @@ usethis::use_data_raw( name = "my_dataset", open = FALSE )
 
 ## Tests ----
 ## Add one line by test you want to create
-usethis::use_test( "app" )
+usethis::use_test( "find_fields" )
+usethis::use_test( "create_groups" )
+usethis::use_test( "two_col_freq" )
+usethis::use_test( "yearly_trend_of_names" )
+
 
 # Documentation
 

@@ -19,16 +19,30 @@ mod_plotly_bars_ui <- function(id){
 #' plotly_bars Server Function
 #'
 #' @noRd 
-mod_plotly_bars_server <- function(input, output, session, data_reactive, data_original, column_name){
+mod_plotly_bars_server <- function(input, output, session, data_reactive, data_original, column_name, orientation="v"){
   ns <- session$ns
   
-  field <- callModule(mod_field_selection_server, "field_selection_ui_1", "bar", data_reactive, data_original)
+  field <- callModule(
+    mod_field_selection_server, 
+    "field_selection_ui_1", 
+    "bar",
+    data_reactive, 
+    data_original,
+    list("x"=column_name)
+  )
 
   output$plot <- renderPlotly({
     if(!is.null(field$xval())){
       dat <- data_reactive$data
       dat <- as.data.frame(table("a"=dat[[field$xval()]]))
-      plot_ly(dat, x = ~a, y = ~Freq, color = ~a, key = ~a, type = "bar", source = ns("tab1")) %>%
+      plot_ly(
+        dat,
+        x = if(orientation=="v"){~a}else{~Freq},
+        y = if(orientation=="v"){~Freq}else{~a},
+        color = ~a,
+        key = ~a,
+        type = "bar",
+        source = ns("tab1")) %>%
         layout(
           paper_bgcolor = 'transparent',
           plot_bgcolor = "transparent",

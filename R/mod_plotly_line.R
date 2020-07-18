@@ -20,26 +20,31 @@ mod_plotly_line_ui <- function(id){
 #' plotly_line Server Function
 #'
 #' @noRd 
-mod_plotly_line_server <- function(input, output, session, data_reactive, data_original, column_name, column_name_y){
+mod_plotly_line_server <- function(input, output, session, data_reactive, data_original, column_name, column_name_y, type = "daily"){
   ns <- session$ns
   
-  field <- callModule(mod_field_selection_server, "field_selection_ui_1", "bubble", data_reactive, data_original)
+  field <- callModule(
+    mod_field_selection_server, 
+    "field_selection_ui_1", 
+    "bubble",
+    data_reactive,
+    data_original,
+    list("x"=column_name, "y"=column_name_y)
+    )
   
   
   output$plot <- renderPlotly({
     if(!is.null(field$xval())){
-      a <- list()
-      data <- na.omit(data_reactive$data[c(field$xval(), field$yval())])
-      for(i in unique(data[[field$xval()]])){
-        dat <- filter(data, data[[field$xval()]]==i)
-        dat <- as.data.frame(table(dat[[field$yval()]]))
-        a[[i]] <- dat
-      }
-      
+      a <- yearly_trend_of_names(data_reactive$data, field$xval(), field$yval())
       pl <- plot_ly(type="scatter", source = ns("tab1"))
-      
+      y_axis_column_name <- "Freq"
+      if(type=="cumulative"){
+        y_axis_column_name = "cumsum"
+      }else{
+        
+      }
       for(i in names(a)){
-        pl <- add_trace(pl, x=a[[i]]$Var1,y=a[[i]]$Freq, mode = "lines+markers", name = i, key=i)
+        pl <- add_trace(pl, x=a[[i]]$Var1,y=a[[i]][[y_axis_column_name]], mode = "lines+markers", name = i, key=i)
       }
       
       pl %>%

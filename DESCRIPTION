@@ -16,11 +16,14 @@ Imports:
     DT,
     leaflet,
     leaflet.extras,
-    sp, 
+    sp,
     shinyWidgets,
-    dplyr
+    dplyr,
+    pkgload
 Remotes: 
     bd-R/bdutilities.app,
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
+Suggests: 
+    testthat
