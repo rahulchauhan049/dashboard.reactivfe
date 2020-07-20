@@ -27,6 +27,7 @@ golem::add_module( name = "plotly_bubble" ) # Name of the module
 golem::add_module( name = "leaflet" ) # Name of the module
 golem::add_module( name = "DT" ) # Name of the module
 golem::add_module( name = "field_selection" ) # Name of the module
+golem::add_module( name = "plot_field_selector" ) # Name of the module
 
 
 
@@ -36,6 +37,9 @@ golem::add_fct( "create_group" )
 golem::add_fct( "find_fields" ) 
 golem::add_fct( "find_two_column_frequency" ) 
 golem::add_fct( "yearly_trend_of_names" ) 
+golem::add_fct( "find_field_for_plot" ) 
+
+golem::add_utils( "helpers" )
 golem::add_utils( "helpers" )
 
 ## External resources

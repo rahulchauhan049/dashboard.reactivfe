@@ -61,7 +61,7 @@ mod_taxonomic_server <- function(input, output, session){
   data_reactive <- reactiveValues(data = hyenaData, events = list())
   
   callModule(mod_plotly_bubble_server, "plotly_bubble_ui_2", data_reactive, hyenaData, "genus", "year")
-  callModule(mod_plotly_bubble_server, "plotly_bubble_ui_1", data_reactive, hyenaData, "genus", "year")
+  callModule(mod_plotly_bubble_server, "plotly_bubble_ui_1", data_reactive, hyenaData, "scientificName", "year")
   callModule(mod_plotly_line_server, "plotly_line_ui_1", data_reactive, hyenaData, "genus", "year", "cumulative")
   callModule(mod_plotly_bars_server, "plotly_bars_ui_1", data_reactive, hyenaData, "genus", orientation ="h")
   callModule(mod_plotly_bars_server, "plotly_bars_ui_2", data_reactive, hyenaData, "day")
