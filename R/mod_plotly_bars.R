@@ -10,9 +10,11 @@
 mod_plotly_bars_ui <- function(id){
   ns <- NS(id)
   tagList(
+    mod_plot_field_selector_ui(ns("plot_field_selector_ui_1")),
     uiOutput(ns("back")),
-    mod_field_selection_ui(ns("field_selection_ui_1")),
-    plotlyOutput(ns("plot")) 
+    plotlyOutput(ns("plot")),
+    hr()
+    
   )
 }
     
@@ -22,19 +24,17 @@ mod_plotly_bars_ui <- function(id){
 mod_plotly_bars_server <- function(input, output, session, data_reactive, data_original, column_name, orientation="v"){
   ns <- session$ns
   
-  field <- callModule(
-    mod_field_selection_server, 
-    "field_selection_ui_1", 
-    "bar",
-    data_reactive, 
-    data_original,
-    list("x"=column_name)
-  )
+  preselected <- reactiveValues(default_fields = list(x=column_name), new_fields = list(Select_X=column_name))
+  
+  callModule(mod_plot_field_selector_server, "plot_field_selector_ui_1", data_reactive, preselected, plot_type = "bar" )
+  
+  
+  
 
   output$plot <- renderPlotly({
-    if(!is.null(field$xval())){
+    if(!is.null(preselected$new_fields$Select_X)){
       dat <- data_reactive$data
-      dat <- as.data.frame(table("a"=dat[[field$xval()]]))
+      dat <- as.data.frame(table("a"=dat[[preselected$new_fields$Select_X]]))
       plot_ly(
         dat,
         x = if(orientation=="v"){~a}else{~Freq},
@@ -48,7 +48,7 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
           plot_bgcolor = "transparent",
           showlegend = FALSE,
           xaxis = list(
-            title = field$xval(),
+            title = preselected$new_fields$Select_X,
             color = '#ffffff',
             zeroline = TRUE,
             showline = TRUE,
@@ -98,7 +98,7 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
       data_reactive$data <- temp_data
     }else{
       
-      data_reactive$events[[ns("tab1")]] <- list(event$x, field$xval())
+      data_reactive$events[[ns("tab1")]] <- list(event$x, preselected$new_fields$Select_X)
       temp_data <- data_original
       
       for(val in data_reactive$events){

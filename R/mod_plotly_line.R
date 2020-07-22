@@ -10,9 +10,11 @@
 mod_plotly_line_ui <- function(id){
   ns <- NS(id)
   tagList(
+    mod_plot_field_selector_ui(ns("plot_field_selector_ui_1")),
     uiOutput(ns("back")),
-    mod_field_selection_ui(ns("field_selection_ui_1")),
-    plotlyOutput(ns("plot")) 
+    plotlyOutput(ns("plot")) ,
+    hr()
+    
   )
   
 }
@@ -23,19 +25,16 @@ mod_plotly_line_ui <- function(id){
 mod_plotly_line_server <- function(input, output, session, data_reactive, data_original, column_name, column_name_y, type = "daily"){
   ns <- session$ns
   
-  field <- callModule(
-    mod_field_selection_server, 
-    "field_selection_ui_1", 
-    "bubble",
-    data_reactive,
-    data_original,
-    list("x"=column_name, "y"=column_name_y)
-    )
+  preselected <- reactiveValues(default_fields = list(x=column_name, y=column_name_y), new_fields = list(Select_X=column_name, Select_Y=column_name_y))
   
+  callModule(mod_plot_field_selector_server, "plot_field_selector_ui_1", data_reactive, preselected, plot_type = "bubble" )
+  
+  
+
   
   output$plot <- renderPlotly({
-    if(!is.null(field$xval())){
-      a <- yearly_trend_of_names(data_reactive$data, field$xval(), field$yval())
+    if(!is.null(preselected$new_fields$Select_X)){
+      a <- yearly_trend_of_names(data_reactive$data, preselected$new_fields$Select_X, preselected$new_fields$Select_Y)
       pl <- plot_ly(type="scatter", source = ns("tab1"))
       y_axis_column_name <- "Freq"
       if(type=="cumulative"){
@@ -51,7 +50,7 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
         layout(paper_bgcolor = 'transparent',
                plot_bgcolor = "transparent",
                xaxis = list(
-                 title = field$xval(),
+                 title = preselected$new_fields$Select_X,
                  showspikes = TRUE,
                  spikemode  = 'across',
                  spikesnap = 'cursor',
@@ -118,7 +117,7 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
     event <- event_data("plotly_click", source = ns("tab1"))
     
     if(!is.null(event)){
-      data_reactive$events[[ns("tab1")]] <- list(event$key, field$xval())
+      data_reactive$events[[ns("tab1")]] <- list(event$key, preselected$new_fields$Select_X)
       temp_data <- data_original
 
       for(val in data_reactive$events){

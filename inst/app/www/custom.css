@@ -12,9 +12,11 @@ body, .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6, .main-header .logo {
     opacity: 1;
 }
 
-#shiny-notification-panel .progress-bar{
-    background-color: #f38f12;
+#field_selector .progress-bar {
+    background-color: orange;
 }
+
+
 
 .progressStep li {
     list-style: none;
@@ -53,7 +55,7 @@ body, .h1, .h2, .h3, .h4, .h5, .h6, h1, h2, h3, h4, h5, h6, .main-header .logo {
     background-color: transparent;
 }
 
-.activeButton .btn{
+.activeButton .btn .bttn{
     background-color: orange;
 }
 

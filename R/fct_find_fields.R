@@ -20,7 +20,7 @@ find_fields <- function(plot, data, group_list = NULL, group_selected = NULL){
       }
     }
     else{
-      columns$x <-  columns$x <- names(dplyr::select_if(data,is.character))
+       columns$x <- names(dplyr::select_if(data,is.character))
     }
   }
   return(columns)

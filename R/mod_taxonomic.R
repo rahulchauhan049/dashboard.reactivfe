@@ -12,13 +12,13 @@ mod_taxonomic_ui <- function(id){
   
   fluidPage(
     fluidRow(
-      mod_plotly_bubble_ui(ns("plotly_bubble_ui_2"))
-    ),
-    fluidRow(
       mod_plotly_bubble_ui(ns("plotly_bubble_ui_1"))
     ),
     fluidRow(
-      mod_plotly_line_ui(ns("plotly_line_ui_1"))
+      mod_plotly_bubble_ui(ns("plotly_line_ui_1"))
+    ),
+    fluidRow(
+      mod_plotly_line_ui(ns("plotly_line_ui_2"))
     ),
     fluidRow(
       column(
@@ -40,9 +40,6 @@ mod_taxonomic_ui <- function(id){
         mod_plotly_bars_ui(ns("plotly_bars_ui_2"))
       )
     ),
-    # fluidRow(
-    #   mod_plotly_bars_ui(ns("plotly_bars_ui_3"))
-    # ),
     fluidRow(
       mod_leaflet_ui(ns("leaflet_ui_1"))
     ),
@@ -60,12 +57,11 @@ mod_taxonomic_server <- function(input, output, session){
   hyenaData <- read.csv("data/hyenaData.csv", fileEncoding="latin1")
   data_reactive <- reactiveValues(data = hyenaData, events = list())
   
-  callModule(mod_plotly_bubble_server, "plotly_bubble_ui_2", data_reactive, hyenaData, "genus", "year")
   callModule(mod_plotly_bubble_server, "plotly_bubble_ui_1", data_reactive, hyenaData, "scientificName", "year")
   callModule(mod_plotly_line_server, "plotly_line_ui_1", data_reactive, hyenaData, "genus", "year", "cumulative")
+  callModule(mod_plotly_line_server, "plotly_line_ui_2", data_reactive, hyenaData, "scientificName", "year", "daily")
   callModule(mod_plotly_bars_server, "plotly_bars_ui_1", data_reactive, hyenaData, "genus", orientation ="h")
   callModule(mod_plotly_bars_server, "plotly_bars_ui_2", data_reactive, hyenaData, "day")
-  # callModule(mod_plotly_bars_server, "plotly_bars_ui_3", data_reactive, hyenaData, "year")
   callModule(mod_plotly_pie_server, "plotly_pie_ui_1", data_reactive, hyenaData, "species")
   callModule(mod_plotly_pie_server, "plotly_pie_ui_2", data_reactive, hyenaData, "scientificName")
   callModule(mod_leaflet_server, "leaflet_ui_1", data_reactive, hyenaData)

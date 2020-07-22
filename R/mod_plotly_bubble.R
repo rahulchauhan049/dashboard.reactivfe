@@ -13,6 +13,7 @@ mod_plotly_bubble_ui <- function(id){
     mod_plot_field_selector_ui(ns("plot_field_selector_ui_1")),
     uiOutput(ns("back")),
     plotlyOutput(ns("plot")),
+    hr()
 
   )
 }
@@ -27,19 +28,7 @@ mod_plotly_bubble_server <- function(input, output, session, data_reactive, data
   
   callModule(mod_plot_field_selector_server, "plot_field_selector_ui_1", data_reactive, preselected, plot_type = "bubble" )
   
-  output$temp <- renderPrint({
-    preselected$new_fields
-  })
-  
-  # field <- callModule(
-  #   mod_field_selection_server,
-  #   "field_selection_ui_1", 
-  #   "bubble", data_reactive,
-  #   data_original,
-  #   list("x"=column_name, "y"=column_name_y),
-  #   default_group
-  #   )
-  
+
   output$plot <- renderPlotly({
     if(!is.null(preselected$new_fields$Select_X)){
       d <- find_two_column_frequency(data_reactive$data, preselected$new_fields$Select_X, preselected$new_fields$Select_Y)

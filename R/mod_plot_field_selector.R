@@ -16,7 +16,14 @@ mod_plot_field_selector_ui <- function(id){
                            c("Item A", "Item B", "Item C")
         )
     ),
-    actionButton(ns("show"), "Show Field Selector")
+    actionBttn(
+      ns("show"),
+      "Show Field Selector",
+      color = "primary",
+      style = "fill",
+      icon = icon("sliders"), #tasks
+      size = "sm"
+    )
   )
 }
     
@@ -37,7 +44,7 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
   choices <- vector()
   a <- vector()
 
-
+  temp <- list()
   columns <- vector()
   
   observe({
@@ -109,16 +116,7 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
         fluidPage(
           fluidRow(
             div(
-              style = "border-radius: 25px;border: 2px solid #73AD21; height: 67px;",
-              column(
-                2,
-                selectInput(
-                  ns("select_input"),
-                  label = "",
-                  choices = c("a","b","c"),
-                  selected = 'a'
-                )
-              ),
+              style = "border-radius: 25px;border: 2px solid #828282; height: 67px;",
               column(
                 4,
                 radioGroupButtons(
@@ -131,7 +129,7 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
                   ),
                   selected = field$selected,
                   status = "info",
-                  size = "xs",
+                  size = "sm",
                   direction = "horizontal",
                   individual = TRUE,
                   justified = TRUE
@@ -139,38 +137,31 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
               ),
               column(
                 3,
-                "Field Type",
+                style = "width: 45%; margin-top: 1%;",
                 verbatimTextOutput(ns("field_type"))
               )
             )
           ),
-
-          lapply(names(fields()[[1]]), function(i){
-            conditionalPanel(
-              sprintf("input['%s'] == '%s'", ns("columns"), i),
-              
-              fluidRow(
-                lapply(names(fields()), function(j){
-                  create_column(j, i)
-                })
+          div(
+            id="field_selector",
+            lapply(names(fields()[[1]]), function(i){
+              conditionalPanel(
+                sprintf("input['%s'] == '%s'", ns("columns"), i),
+                
+                fluidRow(
+                  lapply(names(fields()), function(j){
+                    create_column(j, i)
+                  })
+                )
               )
-            )
-          })
+            })
+          )
           
-          # conditionalPanel(
-          #   sprintf("input['%s'] == 'Select_X'", ns("columns")),
-          #   
-          #   fluidRow(
-          #     lapply(names(fields()), function(i){
-          #       create_column(i, "Select_X")
-          #     })
-          #   )
-          # )
-          
+
         ),
         footer = tagList(
           modalButton("Cancel"),
-          actionButton(ns("ok"), "OK")
+          actionButton(ns("ok"), "Save & Exit")
         )
       )
     )
@@ -191,7 +182,14 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
       fluidRow(
         column(
           6,
-          progressBar(id = id1, value = name_with_missing_number()[[col_name]], display_pct = TRUE),
+          style = "width: 35%;",
+          progressBar(id = id1,
+                      value = name_with_missing_number()[[col_name]],
+                      status = "warning",
+                      display_pct = TRUE,
+                      striped = TRUE
+          )
+          
         ),
         column(
           6,
@@ -211,7 +209,7 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
   create_column <- function(group_name, field_name){
     column(
       3,
-      style = "width: 25%; overflow-y:scroll; max-height: 600px; border-radius: 25px; border: 2px solid #73AD21; height: 600px;",
+      style = "width: 25%; overflow-y:scroll; max-height: 600px; border-radius: 25px; border: 2px solid #828282; height: 600px;",
       fluidRow(
         column(
           12,
@@ -238,7 +236,7 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
             if (input[[paste0("cb_", i, input$columns)]]) {
               for(j in names(data_reactive$data)){
                 if(j==i){
-                  preselected$new_fields[[input$columns]] = j
+                  temp[[input$columns]] <<- j
                 }else{
                   updatePrettyCheckbox(session, paste0("cb_", j, input$columns), value = FALSE)
                 }
@@ -250,35 +248,33 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
     }
   })
   
-  output$field_type <- renderPrint({
-    if(plot_type == "bubble" && input$columns=="Default"){
-      "X: Character, Y: Numeric"
-    }else if(plot_type == "bubble" && input$columns=="Select_X"){
-      "Character"
-    }
-    else if(plot_type == "bubble" && input$columns=="Select_Y"){
-      "Numeric"
+  observeEvent(input$ok,{
+    lapply(names(temp), function(i){
+      preselected$new_fields[[i]] = temp[[i]]
+    })
+    removeModal()
+  })
+  
+  output$field_type <- renderText({
+    if(plot_type == "bubble" || plot_type == "line"){
+      if(input$columns=="Default"){
+        "Field Type X: Character, Y: Numeric"
+      }else if(input$columns=="Select_X"){
+        "Field Type: Character"
+      }
+      else if(input$columns=="Select_Y"){
+        "Field Type: Numeric"
+      }
+    }else if(plot_type == "pie" || plot_type == "bar"){
+      if(input$columns=="Default"){
+        "Field Type X: Character"
+      }else if(input$columns=="Select_X"){
+        "Field Type: Character"
+      }
     }
   })
   
-  # observe({
-  # 
-  #     lapply(names(data_reactive$data), function(i){
-  #       observeEvent(input[[paste0("cb_",i)]],{
-  #         if(input[[paste0("cb_",i)]]){
-  #           for(j in names(data_reactive$data)){
-  #             if(j==i){
-  #             }else{
-  #               updatePrettyCheckbox(session, paste0("cb_",j), value = FALSE)
-  #             }
-  #           }
-  #         }
-  #       })
-  #     })
-  #     
-  # 
-  # })
-  
+
   
 
  

@@ -10,9 +10,11 @@
 mod_plotly_pie_ui <- function(id){
   ns <- NS(id)
   tagList(
+    mod_plot_field_selector_ui(ns("plot_field_selector_ui_1")),
     uiOutput(ns("back")),
-    mod_field_selection_ui(ns("field_selection_ui_1")),
-    plotlyOutput(ns("plot")) 
+    plotlyOutput(ns("plot")),
+    hr()
+    
   )
  
   
@@ -24,23 +26,21 @@ mod_plotly_pie_ui <- function(id){
 mod_plotly_pie_server <- function(input, output, session, data_reactive, data_original, column_name){
   ns <- session$ns
   
-  field <- callModule(
-    mod_field_selection_server,
-    "field_selection_ui_1", 
-    "pie", 
-    data_reactive,
-    data_original,
-    list("x"=column_name)
-  )
+  preselected <- reactiveValues(default_fields = list(x=column_name), new_fields = list(Select_X=column_name))
   
+  callModule(mod_plot_field_selector_server, "plot_field_selector_ui_1", data_reactive, preselected, plot_type = "pie" )
+  
+  
+  
+
  
   output$plot <- renderPlotly({
-    if(!is.null(field$xval())){
+    if(!is.null(preselected$new_fields$Select_X)){
       dat <- data_reactive$data
-      dat <- as.data.frame(table("a"=dat[[field$xval()]]))
+      dat <- as.data.frame(table("a"=dat[[preselected$new_fields$Select_X]]))
       plot_ly(dat, type='pie', labels=~a, values= ~Freq, key = ~a, showlegend = FALSE, source = ns("tab1")) %>%
         layout(
-          title = field$xval(),
+          title = preselected$new_fields$Select_X,
           paper_bgcolor = 'transparent',
           plot_bgcolor = "transparent",
           showlegend = FALSE,
@@ -90,7 +90,7 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
     
     
     if(!is.null(event)){
-      data_reactive$events[[ns("tab1")]] <- list(event$key, field$xval())
+      data_reactive$events[[ns("tab1")]] <- list(event$key, preselected$new_fields$Select_X)
       temp_data <- data_original
 
       for(val in data_reactive$events){
