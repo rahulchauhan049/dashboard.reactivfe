@@ -55,6 +55,7 @@ mod_leaflet_server <- function(input, output, session, data_reactive, data_origi
   ns <- session$ns
   
   output$mymap <- renderLeaflet({
+    print("leaflet")
     dat <- data_reactive$data
     validate(
       need(length(dat)>0, 'Please upload/download a dataset first')
@@ -87,67 +88,72 @@ mod_leaflet_server <- function(input, output, session, data_reactive, data_origi
             "verbatimLongitude" = dat$verbatimLongitude <- as.numeric(dat$verbatimLongitude),
             "decimalLongitude" = dat$decimalLongitude <- as.numeric(dat$decimalLongitude),
     )
+    map_texture <- input$mapTexture
+    map_color <- input$mapColor
     
-    leaflet(
-      data = na.omit(
-        dat[c(latitudeName, longitudeName)]
-      )
-    ) %>%
-      addProviderTiles(
-        input$mapTexture
-      ) %>%
-      addCircles(
-        
-        switch(
-          longitudeName,
-          "decimalLongitude" = ~decimalLongitude,
-          "verbatimLongitude" = ~verbatimLongitude
-        ),
-        switch(
-          latitudeName,
-          "decimalLatitude" = ~decimalLatitude,
-          "verbatimLatitude" = ~verbatimLatitude
-        ),
-        color = input$mapColor
-      ) %>%
-      fitBounds(
-        switch(
-          longitudeName,
-          "decimalLongitude" = ~min(decimalLongitude),
-          "verbatimLongitude" = ~min(verbatimLongitude)
-        ),
-        switch(
-          latitudeName,
-          "decimalLatitude" = ~min(decimalLatitude),
-          "verbatimLatitude" = ~min(verbatimLatitude)
-        ),
-        switch(
-          longitudeName,
-          "decimalLatitude" = ~max(decimalLongitude),
-          "verbatimLatitude" = ~max(verbatimLongitude)
-        ),
-        switch(
-          latitudeName,
-          "decimalLatitude" = ~max(decimalLatitude),
-          "verbatimLatitude" = ~max(verbatimLatitude)
+    future({
+      leaflet(
+        data = na.omit(
+          dat[c(latitudeName, longitudeName)]
         )
-        
       ) %>%
-      leaflet.extras::addDrawToolbar(
-        targetGroup='draw',
-        polylineOptions = FALSE,
-        circleOptions = FALSE,
-        markerOptions = FALSE,
-        rectangleOptions = FALSE,
-        circleMarkerOptions = FALSE,
-        editOptions = leaflet.extras::editToolbarOptions()
-      ) %>%
-      addLayersControl(
-        overlayGroups = c('draw'),
-        options = layersControlOptions(
-          collapsed=FALSE
-        )
-      ) 
+        addProviderTiles(
+          map_texture
+        ) %>%
+        addCircles(
+          
+          switch(
+            longitudeName,
+            "decimalLongitude" = ~decimalLongitude,
+            "verbatimLongitude" = ~verbatimLongitude
+          ),
+          switch(
+            latitudeName,
+            "decimalLatitude" = ~decimalLatitude,
+            "verbatimLatitude" = ~verbatimLatitude
+          ),
+          color = map_color
+        ) %>%
+        fitBounds(
+          switch(
+            longitudeName,
+            "decimalLongitude" = ~min(decimalLongitude),
+            "verbatimLongitude" = ~min(verbatimLongitude)
+          ),
+          switch(
+            latitudeName,
+            "decimalLatitude" = ~min(decimalLatitude),
+            "verbatimLatitude" = ~min(verbatimLatitude)
+          ),
+          switch(
+            longitudeName,
+            "decimalLatitude" = ~max(decimalLongitude),
+            "verbatimLatitude" = ~max(verbatimLongitude)
+          ),
+          switch(
+            latitudeName,
+            "decimalLatitude" = ~max(decimalLatitude),
+            "verbatimLatitude" = ~max(verbatimLatitude)
+          )
+          
+        ) %>%
+        leaflet.extras::addDrawToolbar(
+          targetGroup='draw',
+          polylineOptions = FALSE,
+          circleOptions = FALSE,
+          markerOptions = FALSE,
+          rectangleOptions = FALSE,
+          circleMarkerOptions = FALSE,
+          editOptions = leaflet.extras::editToolbarOptions()
+        ) %>%
+        addLayersControl(
+          overlayGroups = c('draw'),
+          options = layersControlOptions(
+            collapsed=FALSE
+          )
+        ) 
+    })
+    
   })
   
   

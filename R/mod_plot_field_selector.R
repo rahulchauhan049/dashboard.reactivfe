@@ -116,7 +116,7 @@ mod_plot_field_selector_server <- function(input, output, session,  data_reactiv
         fluidPage(
           fluidRow(
             div(
-              style = "border-radius: 25px;border: 2px solid #828282; height: 67px;",
+              style = "border-radius: 25px;border: 2px solid #828282;    margin-bottom: 1%; height: 67px;",
               column(
                 4,
                 radioGroupButtons(

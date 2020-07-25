@@ -16,7 +16,14 @@ mod_DT_ui <- function(id){
                            c("Item A", "Item B", "Item C")
         )
     ),
-    actionButton(ns("show"), "Show modal dialog"),
+    actionBttn(
+      ns("show"),
+      "Table Field Selector",
+      color = "primary",
+      style = "fill",
+      icon = icon("tasks"), #tasks
+      size = "sm"
+    ),
     div(
       id = ns("summary_data_table_id"),
       DT::DTOutput(ns("summary_data_table"))
@@ -105,7 +112,13 @@ mod_DT_server <- function(input, output, session, data_reactive, pre_selected){
       fluidRow(
         column(
           6,
-          progressBar(id = id1, value = name_with_missing_number()[[col_name]], display_pct = TRUE),
+          style = "width: 35%;",
+          progressBar(id = id1,
+                      value = name_with_missing_number()[[col_name]],
+                      status = "warning",
+                      display_pct = TRUE,
+                      striped = TRUE
+          )
         ),
         column(
           6,
@@ -122,7 +135,7 @@ mod_DT_server <- function(input, output, session, data_reactive, pre_selected){
   create_column <- function(group_name){
     column(
       2,
-      style = "width: 20%; overflow-y:scroll; max-height: 600px; border-radius: 25px; border: 2px solid #73AD21; height: 600px;",
+      style = "width: 25%; overflow-y:scroll; max-height: 600px; border-radius: 25px; border: 2px solid #828282; height: 600px;",
       fluidRow(
         column(
           2,
@@ -152,7 +165,7 @@ mod_DT_server <- function(input, output, session, data_reactive, pre_selected){
         fluidPage(
           fluidRow(
             div(
-              style = "border-radius: 25px;border: 2px solid #73AD21; height: 67px;",
+              style = "border-radius: 25px;border: 2px solid #828282; height: 67px;",
               column(
                 3,
                 radioButtons(
@@ -182,10 +195,16 @@ mod_DT_server <- function(input, output, session, data_reactive, pre_selected){
               
             )
           ),
-          fluidRow(
-            lapply(names(group()), function(i){
-              create_column(i)
-            })
+          div(
+            id="field_selector",
+            fluidRow(
+              lapply(names(group()), function(i){
+                if(i!="core"){
+                  create_column(i)
+                }
+                
+              })
+            )
           )
         ),
         footer = tagList(
@@ -338,24 +357,30 @@ mod_DT_server <- function(input, output, session, data_reactive, pre_selected){
   
   filter_selected <- vector()
   output$summary_data_table <- DT::renderDT({
-    for(i in pre_selected){
-      if(i %in% colnames(data_reactive$data))
-        filter_selected <- c(filter_selected, i)
-    }
-    DT::datatable(
-      data_reactive$data[filter_selected],        
-      filter = 'top',
-      extensions = c("ColReorder", "Scroller"),
-      options = list(
-        scrollX = TRUE,
-        dom = "Bfrtip",#'Pfrtip',
-        colReorder = TRUE,
-        deferRender = TRUE,
-        scrollY = 500,
-        scroller = TRUE
-      ),
-      style = "bootstrap"
-    )
+    print("DT")
+    data <- data_reactive$data
+    
+    future({
+      for(i in pre_selected){
+        if(i %in% colnames(data))
+          filter_selected <- c(filter_selected, i)
+      }
+      DT::datatable(
+        data[filter_selected],        
+        filter = 'top',
+        extensions = c("ColReorder", "Scroller"),
+        options = list(
+          scrollX = TRUE,
+          dom = "Bfrtip",#'Pfrtip',
+          colReorder = TRUE,
+          deferRender = TRUE,
+          scrollY = 500,
+          scroller = TRUE
+        ),
+        style = "bootstrap"
+      )
+    })
+    
   })
  
 }

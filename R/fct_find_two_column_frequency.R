@@ -7,3 +7,4 @@ find_two_column_frequency <- function(data, column_1, column_2){
   d <- d %>% filter(Freq > 0) %>% droplevels()
   return(d)
 }
+

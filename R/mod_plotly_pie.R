@@ -35,12 +35,20 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
 
  
   output$plot <- renderPlotly({
+    print("pie")
     if(!is.null(preselected$new_fields$Select_X)){
+      
+      column_x <- preselected$new_fields$Select_X
       dat <- data_reactive$data
-      dat <- as.data.frame(table("a"=dat[[preselected$new_fields$Select_X]]))
-      plot_ly(dat, type='pie', labels=~a, values= ~Freq, key = ~a, showlegend = FALSE, source = ns("tab1")) %>%
+      
+      future({
+        dat <- as.data.frame(table("a"=dat[[column_x]]))
+        dat
+      }) %...>%
+ 
+      plot_ly(type='pie', labels=~a, values= ~Freq, key = ~a, showlegend = FALSE, source = ns("tab1")) %...>%
         layout(
-          title = preselected$new_fields$Select_X,
+          # title = preselected$new_fields$Select_X,
           paper_bgcolor = 'transparent',
           plot_bgcolor = "transparent",
           showlegend = FALSE,
@@ -57,6 +65,7 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
             showgrid = FALSE
           )
         )
+      
     }
   })
   

@@ -19,7 +19,9 @@ Imports:
     sp,
     shinyWidgets,
     dplyr,
-    pkgload
+    pkgload,
+    promises,
+    future
 Remotes: 
     bd-R/bdutilities.app,
 Encoding: UTF-8

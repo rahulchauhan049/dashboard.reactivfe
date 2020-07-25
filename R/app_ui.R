@@ -4,7 +4,11 @@
 #'     DO NOT REMOVE.
 #' @import shiny shinydashboard dashboardthemes shinyjs bdutilities.app
 #' @import plotly DT leaflet leaflet.extras sp shinyWidgets dplyr
+#' @import promises future
 #' @noRds
+
+future::plan(future::multiprocess)
+
 app_ui <- function(request) {
   dashboardPage(
     skin = "yellow",

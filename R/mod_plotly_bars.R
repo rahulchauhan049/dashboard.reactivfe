@@ -32,23 +32,33 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
   
 
   output$plot <- renderPlotly({
+    print("bars")
     if(!is.null(preselected$new_fields$Select_X)){
+      
+      
+      column_x <- preselected$new_fields$Select_X
       dat <- data_reactive$data
-      dat <- as.data.frame(table("a"=dat[[preselected$new_fields$Select_X]]))
+      
+      future({
+        dat <- as.data.frame(table("a"=dat[column_x]))
+        dat
+      }) %...>%
+      
+     
       plot_ly(
-        dat,
+        # dat,
         x = if(orientation=="v"){~a}else{~Freq},
         y = if(orientation=="v"){~Freq}else{~a},
         color = ~a,
         key = ~a,
         type = "bar",
-        source = ns("tab1")) %>%
+        source = ns("tab1")) %...>%
         layout(
           paper_bgcolor = 'transparent',
           plot_bgcolor = "transparent",
           showlegend = FALSE,
           xaxis = list(
-            title = preselected$new_fields$Select_X,
+            # title = preselected$new_fields$Select_X,
             color = '#ffffff',
             zeroline = TRUE,
             showline = TRUE,

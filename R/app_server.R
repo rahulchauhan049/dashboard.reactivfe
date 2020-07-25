@@ -7,6 +7,8 @@
 app_server <- function( input, output, session ) {
   # List the first level callModules here
   
+  options(shiny.maxRequestSize = 5000 * 1024 ^ 2)
+  
   data_store <-
     shiny::reactiveValues(
       darwinized_data = data.frame(),
@@ -26,7 +28,7 @@ app_server <- function( input, output, session ) {
                "darwinize",
                dat = data_store$input_data)
   
-  callModule(mod_taxonomic_server, "taxonomic_ui_1")
+  callModule(mod_taxonomic_server, "taxonomic_ui_1" ,  data_store$darwinized_data)
 
 
 }

@@ -33,8 +33,24 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
 
   
   output$plot <- renderPlotly({
+    print("line")
     if(!is.null(preselected$new_fields$Select_X)){
-      a <- yearly_trend_of_names(data_reactive$data, preselected$new_fields$Select_X, preselected$new_fields$Select_Y)
+      
+      data <- data_reactive$data
+      column_1 <-  preselected$new_fields$Select_X
+      column_2 <-  preselected$new_fields$Select_Y
+      
+      future({
+        a <- list()
+        data <- na.omit(data[c(column_1, column_2)])
+        for(i in unique(data[[column_1]])){
+          dat <- filter(data, data[[column_1]]==i)
+          dat <- as.data.frame(table(dat[[column_2]])) 
+          dat <-  dat %>%
+            mutate(cumsum = cumsum(Freq))
+          a[[i]] <- dat
+        }
+      
       pl <- plot_ly(type="scatter", source = ns("tab1"))
       y_axis_column_name <- "Freq"
       if(type=="cumulative"){
@@ -50,7 +66,7 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
         layout(paper_bgcolor = 'transparent',
                plot_bgcolor = "transparent",
                xaxis = list(
-                 title = preselected$new_fields$Select_X,
+                 # title = preselected$new_fields$Select_X,
                  showspikes = TRUE,
                  spikemode  = 'across',
                  spikesnap = 'cursor',
@@ -86,6 +102,8 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
                spikedistance = 300,
                hoverdistance = 10
         )
+      })
+      
     }
   })
   
