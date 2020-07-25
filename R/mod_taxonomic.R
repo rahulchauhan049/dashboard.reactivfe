@@ -62,21 +62,21 @@ mod_taxonomic_server <- function(input, output, session, data){
 
   
   callModule(mod_plotly_bubble_server, "plotly_bubble_ui_1", data_reactive,  data(), "species", "year")
-  # callModule(mod_plotly_line_server, "plotly_line_ui_1", data_reactive,  data(), "species", "year", "cumulative")
-  # callModule(mod_plotly_line_server, "plotly_line_ui_2", data_reactive,  data(), "kingdom", "year", "daily")
-  # callModule(mod_plotly_bars_server, "plotly_bars_ui_1", data_reactive,  data(), "kingdom", orientation ="h")
-  # callModule(mod_plotly_pie_server, "plotly_pie_ui_1", data_reactive,  data(), "kingdom")
+  callModule(mod_plotly_line_server, "plotly_line_ui_1", data_reactive,  data(), "species", "year", "cumulative")
+  callModule(mod_plotly_line_server, "plotly_line_ui_2", data_reactive,  data(), "species", "year", "daily")
+  callModule(mod_plotly_bars_server, "plotly_bars_ui_1", data_reactive,  data(), "family", orientation ="h")
+  callModule(mod_plotly_pie_server, "plotly_pie_ui_1", data_reactive,  data(), "genus")
   # callModule(mod_leaflet_server, "leaflet_ui_1", data_reactive,  data())
-  # callModule(mod_DT_server, "DT_ui_1", data_reactive, c(
-  #   "countryCode",
-  #   "locality",
-  #   "decimalLatitude",
-  #   "decimalLongitude",
-  #   "verbatimLatitude",
-  #   "verbatimLongitude",
-  #   "coordinateUncertaintyInMeters",
-  #   "coordinatePrecision"
-  # ))
+  callModule(mod_DT_server, "DT_ui_1", data_reactive, c(
+    "countryCode",
+    "locality",
+    "decimalLatitude",
+    "decimalLongitude",
+    "verbatimLatitude",
+    "verbatimLongitude",
+    "coordinateUncertaintyInMeters",
+    "coordinatePrecision"
+  ))
 
 }
     

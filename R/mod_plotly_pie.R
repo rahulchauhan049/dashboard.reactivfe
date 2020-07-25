@@ -10,13 +10,28 @@
 mod_plotly_pie_ui <- function(id){
   ns <- NS(id)
   tagList(
-    mod_plot_field_selector_ui(ns("plot_field_selector_ui_1")),
-    uiOutput(ns("back")),
-    plotlyOutput(ns("plot")),
-    hr()
+    fluidRow(
+      column(
+        3,
+        mod_plot_field_selector_ui(ns("plot_field_selector_ui_1"))
+      ),
+      column(
+        9,
+        uiOutput(ns("next_ui")),
+        uiOutput(ns("previous_ui"))
+      )
+    ),
+    fluidRow(
+      br(),
+      uiOutput(ns("back")),
+      
+      plotlyOutput(ns("plot")),
+      hr()
+    )
+    
     
   )
- 
+  
   
 }
     
@@ -25,6 +40,10 @@ mod_plotly_pie_ui <- function(id){
 #' @noRd 
 mod_plotly_pie_server <- function(input, output, session, data_reactive, data_original, column_name){
   ns <- session$ns
+  
+  
+  plot <- reactiveValues(page_number = 1)
+  
   
   preselected <- reactiveValues(default_fields = list(x=column_name), new_fields = list(Select_X=column_name))
   
@@ -41,8 +60,20 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
       column_x <- preselected$new_fields$Select_X
       dat <- data_reactive$data
       
+      chunk2 <- function(x,n) split(x, ceiling(seq_along(x)/n)) 
+      a <- chunk2(unique(data_reactive$data[[preselected$new_fields$Select_X]]), 10)
+      
+      if(length(a) < plot$page_number){
+        plot$page_number = 1
+      }
+      
+      temp_data <-  filter(
+        data_reactive$data,
+        data_reactive$data[[ preselected$new_fields$Select_X]] %in% a[[plot$page_number]])
+      
+      
       future({
-        dat <- as.data.frame(table("a"=dat[[column_x]]))
+        dat <- as.data.frame(table("a"=temp_data[[column_x]]))
         dat
       }) %...>%
  
@@ -73,13 +104,66 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
   
   output$back <- renderUI({
     if(!is.null(data_reactive$events[[ns("tab1")]])){
-      actionButton(
+      actionBttn(
         ns("clear"),
         "Back/Reset",
-        icon("chevron-left")
+        icon("chevron-left"),
+        style = "simple", 
+        color = "primary",
+        size = "sm"
       )
     }
-
+    
+  })
+  
+  output$next_ui <- renderUI({
+    if(!is.null(preselected$new_fields$Select_X)){
+      chunk2 <- function(x,n) split(x, ceiling(seq_along(x)/n)) 
+      a <- chunk2(unique(data_reactive$data[[preselected$new_fields$Select_X]]), 30)
+      if(length(a)>1 && plot$page_number < length(a)){
+        div(
+          style = "float:right;",
+          actionBttn(
+            ns("next_button"),
+            "Next",
+            icon("chevron-right"),
+            style = "simple", 
+            color = "primary",
+            size = "sm"
+          )
+          
+        )
+        
+      }
+    }
+  })
+  
+  observeEvent(input$next_button,{
+    
+    plot$page_number = plot$page_number + 1
+  })
+  
+  output$previous_ui <- renderUI({
+    if(!is.null(preselected$new_fields$Select_X)){
+      if(plot$page_number > 1){
+        div(
+          style = "float:right;",
+          actionBttn(
+            ns("previous_button"),
+            "Previous",
+            icon("chevron-left"),
+            style = "simple", 
+            color = "primary",
+            size = "sm"
+          )
+          
+        )
+      }
+    }
+  })
+  
+  observeEvent(input$previous_button,{
+    plot$page_number = plot$page_number - 1
   })
   
   observeEvent(input$clear, {
