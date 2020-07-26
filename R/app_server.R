@@ -7,6 +7,9 @@
 app_server <- function( input, output, session ) {
   # List the first level callModules here
   
+  load(file = "data/dictionary.rda")
+  
+  
   options(shiny.maxRequestSize = 5000 * 1024 ^ 2)
   
   data_store <-
