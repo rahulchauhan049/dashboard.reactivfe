@@ -33,7 +33,7 @@ mod_plot_field_selector_ui <- function(id){
 mod_plot_field_selector_server <- function(input, output, session,  data_reactive, preselected, plot_type){
   ns <- session$ns
 
-  dictionary <- read.csv("data/dictionary.csv")
+  # dictionary <- read.csv("data/dictionary.csv")
   group <- reactive(create_group(dictionary, data_reactive$data))
   fields <- reactive(find_field_for_plot(data_reactive$data, plot_type, group()))
   
