@@ -3,12 +3,10 @@ yearly_trend_of_names <- function(data, column_1, column_2){
   data <- na.omit(data[c(column_1, column_2)])
   for(i in unique(data[[column_1]])){
     dat <- filter(data, data[[column_1]]==i)
-    dat <- as.data.frame(table(dat[[column_2]])) 
+    dat <- data.frame(table(dat[[column_2]]), stringsAsFactors=FALSE) 
     dat <-  dat %>%
       mutate(cumsum = cumsum(Freq))
     a[[i]] <- dat
   }
   return(a)
 }
-
-

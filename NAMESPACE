@@ -2,6 +2,7 @@
 
 export(run_app)
 import(DT)
+import(RColorBrewer)
 import(bdutilities.app)
 import(dashboardthemes)
 import(dplyr)

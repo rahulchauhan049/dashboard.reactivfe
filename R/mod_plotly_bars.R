@@ -39,7 +39,7 @@ mod_plotly_bars_ui <- function(id){
 mod_plotly_bars_server <- function(input, output, session, data_reactive, data_original, column_name, orientation="v"){
   ns <- session$ns
   
-  plot <- reactiveValues(page_number = 1)
+  plot <- reactiveValues(page_number = 1, suspended = TRUE)
   
   
   preselected <- reactiveValues(default_fields = list(x=column_name), new_fields = list(Select_X=column_name))
@@ -50,15 +50,10 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
   
 
   output$plot <- renderPlotly({
-    print("bars")
     if(!is.null(preselected$new_fields$Select_X)){
       
-      
-      
-      
       column_x <- preselected$new_fields$Select_X
-      data <- data_reactive$data
-      
+
       chunk2 <- function(x,n) split(x, ceiling(seq_along(x)/n)) 
       a <- chunk2(unique(data_reactive$data[[preselected$new_fields$Select_X]]), 10)
       
@@ -70,6 +65,11 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
         data_reactive$data,
         data_reactive$data[[ preselected$new_fields$Select_X]] %in% a[[plot$page_number]])
       
+      if(plot$suspended) {
+        observer$resume()
+        plot$suspended <- FALSE
+      }
+      
       
       future({
         dat <- as.data.frame(table("a"=temp_data[column_x]))
@@ -78,10 +78,10 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
       
      
       plot_ly(
-        # dat,
         x = if(orientation=="v"){~a}else{~Freq},
         y = if(orientation=="v"){~Freq}else{~a},
         color = ~a,
+        colors = colorRampPalette(brewer.pal(8, "Set2"))(40),
         key = ~a,
         type = "bar",
         source = ns("tab1")) %...>%
@@ -182,7 +182,8 @@ mod_plotly_bars_server <- function(input, output, session, data_reactive, data_o
   })
   
   
-  observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, {
+  observer <- observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, suspended = TRUE, {
+    
     
     event <- event_data("plotly_click", source = ns("tab1"))
     

@@ -39,7 +39,9 @@ mod_plotly_bubble_ui <- function(id){
 mod_plotly_bubble_server <- function(input, output, session, data_reactive, data_original, column_name=NULL, column_name_y=NULL, default_group=NULL){
   ns <- session$ns
   
-  plot <- reactiveValues(page_number = 1)
+  plot <- reactiveValues(page_number = 1, suspended = TRUE)
+  
+
 
 
   preselected <- reactiveValues(default_fields = list(x=column_name, y=column_name_y), new_fields = list(Select_X=column_name, Select_Y=column_name_y))
@@ -49,6 +51,7 @@ mod_plotly_bubble_server <- function(input, output, session, data_reactive, data
   
 
   output$plot <- renderPlotly({
+    req( data_reactive$data)
    
     if(!is.null(preselected$new_fields$Select_X)){
       
@@ -66,8 +69,11 @@ mod_plotly_bubble_server <- function(input, output, session, data_reactive, data
       temp_data <-  filter(
         data_reactive$data,
         data_reactive$data[[ preselected$new_fields$Select_X]] %in% a[[plot$page_number]])
-
-     
+        
+      if(plot$suspended) {
+        observer$resume()
+        plot$suspended <- FALSE
+      }
       
       future({
         d <- temp_data[c(column_1, column_2)]
@@ -76,8 +82,12 @@ mod_plotly_bubble_server <- function(input, output, session, data_reactive, data
         d <- d %>% filter(Freq > 0) %>% droplevels()
 }) %...>%
 
-      plot_ly(x = ~x, y = ~y, type = 'scatter', mode = 'markers', size = ~Freq, color = ~x, colors = 'Paired',
-              sizes = c(10, 50),
+      plot_ly(x = ~x, y = ~y, type = 'scatter',
+              mode = 'markers', 
+              span  = ~Freq,
+              color = ~x,
+              colors = colorRampPalette(brewer.pal(8, "Set2"))(40),
+              spans = c(1, 50),
               marker = list(opacity = 0.5, sizemode = 'diameter'),
               hoverinfo = 'text',
               text = ~paste(preselected$new_fields$Select_X,": ", x, '<br>',preselected$new_fields$Select_Y,': ', y,
@@ -110,7 +120,7 @@ mod_plotly_bubble_server <- function(input, output, session, data_reactive, data
                ),
                showlegend = FALSE
         )
-      
+   
     
     }
   })
@@ -191,10 +201,12 @@ mod_plotly_bubble_server <- function(input, output, session, data_reactive, data
     data_reactive$data <- temp_data
   })
   
+
   
-  observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, {
+  
+  observer <- observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, suspended = TRUE, {
     
-    event <- event_data("plotly_click", source = ns("tab1"))
+    event <-event_data("plotly_click", source = ns("tab1"))
 
     if(!is.null(event)){
       data_reactive$events[[ns("tab1")]] <- list(event$x, preselected$new_fields$Select_X)

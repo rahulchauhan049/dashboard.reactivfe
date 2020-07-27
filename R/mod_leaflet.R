@@ -27,21 +27,24 @@ mod_leaflet_ui <- function(id){
           "Esri.WorldImagery" = "Esri.WorldImagery",
           "Esri.WorldTerrain" = "Esri.WorldTerrain"
         ),
-        selected = "OpenTopoMap"
+        selected = "OpenStreetMap.Mapnik"
       )
     ),
     column(
       6,
       selectInput(
-        ns("mapColor"),
-        "Points Color",
-        choices = list(
-          "Red" = 'red',
-          "Green" = "green",
-          "Blue" = "blue",
-          "Black" = "black"
+        ns("mapLayer"),
+        "Points Layer",
+        choices = c(
+          "kingdom",
+          "phylum",
+          "order",
+          "family", 
+          "genus",
+          "species"
         ),
-        selected = "blue"
+        selected = "genus"
+    
       )
     ),
     leafletOutput(ns("mymap"), height = "400")
@@ -55,8 +58,28 @@ mod_leaflet_server <- function(input, output, session, data_reactive, data_origi
   ns <- session$ns
   
   output$mymap <- renderLeaflet({
-    print("leaflet")
+    
+    
+    
+    mapLayer <- input$mapLayer
+    
     dat <- data_reactive$data
+    my_palette <-  brewer.pal(9, "Paired")
+    factpal <- colorFactor(my_palette, levels = unique(dat[[mapLayer]]))
+    
+    # create columns with formatted links
+    dat$google <- map_url(dat[[mapLayer]], label = "Lookup Google", type = "google")
+    dat$crossref <- map_url(dat[[mapLayer]], label = "Lookup Crossref", 
+                                   type = "crossref")
+    dat$lens <- map_url(dat[[mapLayer]], label = "Lookup Patents", type = "lens")
+    dat$gbif <- map_url(dat[[mapLayer]], label = "Lookup GBIF", type = "gbif")
+    
+    # combine links for use as a popup
+    dat$combined_label <- paste0("<br>", "<strong>", dat[[mapLayer]], 
+                                        "</strong>", "</br>", "<br>", dat$google, "</br>", "<br>", dat$gbif, 
+                                        "</br>", "<br>", dat$crossref, "</br>", "<br>", dat$lens, 
+                                        "</br>")
+    
     validate(
       need(length(dat)>0, 'Please upload/download a dataset first')
     )
@@ -89,32 +112,67 @@ mod_leaflet_server <- function(input, output, session, data_reactive, data_origi
             "decimalLongitude" = dat$decimalLongitude <- as.numeric(dat$decimalLongitude),
     )
     map_texture <- input$mapTexture
-    map_color <- input$mapColor
-    
-    future({
-      leaflet(
+
+      map <- leaflet(
         data = na.omit(
           dat[c(latitudeName, longitudeName)]
         )
       ) %>%
         addProviderTiles(
           map_texture
-        ) %>%
-        addCircles(
-          
-          switch(
-            longitudeName,
-            "decimalLongitude" = ~decimalLongitude,
-            "verbatimLongitude" = ~verbatimLongitude
-          ),
-          switch(
-            latitudeName,
-            "decimalLatitude" = ~decimalLatitude,
-            "verbatimLatitude" = ~verbatimLatitude
-          ),
-          color = map_color
-        ) %>%
-        fitBounds(
+        )
+      
+    for(i in unique(dat[[mapLayer]])){
+      data = dat[dat[[mapLayer]] == i, ]
+      map <- map %>%addCircles(
+        data = data,
+        switch(
+          longitudeName,
+          "decimalLongitude" = ~decimalLongitude,
+          "verbatimLongitude" = ~verbatimLongitude
+        ),
+        switch(
+          latitudeName,
+          "decimalLatitude" = ~decimalLatitude,
+          "verbatimLatitude" = ~verbatimLatitude
+        ),
+        radius = 3, 
+        weight = 4,
+        opacity = 0.5,
+        fill = TRUE, 
+        fillOpacity = 0.2,
+        color =~factpal(unique(dat[[mapLayer]])),
+        group = i,
+        popup = dat$combined_label
+      )
+    }
+      
+      names <- unique(dat[[mapLayer]])
+      
+      if(length(names)>10){
+       
+        hidden_names <- names[10:length(names)]
+        map <- map %>% hideGroup(hidden_names)
+      }
+      
+      
+      
+      
+        # addCircles(
+        #   
+        #   switch(
+        #     longitudeName,
+        #     "decimalLongitude" = ~decimalLongitude,
+        #     "verbatimLongitude" = ~verbatimLongitude
+        #   ),
+        #   switch(
+        #     latitudeName,
+        #     "decimalLatitude" = ~decimalLatitude,
+        #     "verbatimLatitude" = ~verbatimLatitude
+        #   ),
+        #   color = map_color
+        # ) %>%
+        map %>% fitBounds(
           switch(
             longitudeName,
             "decimalLongitude" = ~min(decimalLongitude),
@@ -147,13 +205,14 @@ mod_leaflet_server <- function(input, output, session, data_reactive, data_origi
           editOptions = leaflet.extras::editToolbarOptions()
         ) %>%
         addLayersControl(
-          overlayGroups = c('draw'),
+          overlayGroups = unique(dat[[mapLayer]]),
           options = layersControlOptions(
             collapsed=FALSE
           )
         ) 
-    })
+   
     
+
   })
   
   
@@ -254,6 +313,40 @@ mod_leaflet_server <- function(input, output, session, data_reactive, data_origi
     }
   )
  
+}
+
+# function to create hyperlinks
+map_url <- function(query, label = "NULL", type = "NULL") {
+  href <- "<a href="
+  close_href <- ">"  #included for flexibility in labelling
+  close_a <- "</a>"
+  if (type == "google") {
+    query <- stringr::str_replace_all(query, " ", "+")
+    google_base <- "https://www.google.co.uk/#q="
+    url <- paste0(google_base, query)
+    out <- paste0(href, shQuote(url), close_href, label, close_a)
+  }
+  if (type == "crossref") {
+    query <- stringr::str_replace_all(query, " ", "+%2B")
+    crossref_base <- "http://search.crossref.org/?q=%2B"
+    url <- paste0(crossref_base, query)
+    out <- paste0(href, shQuote(url), close_href, label, close_a)
+  }
+  if (type == "gbif") {
+    query <- stringr::str_replace_all(query, " ", "+")
+    gbif_base <- "http://www.gbif.org/species/search?q="
+    url <- paste0(gbif_base, query)
+    out <- paste0(href, shQuote(url), close_href, label, close_a)
+  }
+  if (type == "lens") {
+    # note restriction to main jurisdictions and no stemming to reduce
+    # duplication and false positives
+    query <- stringr::str_replace_all(query, " ", "+")
+    lens_base <- "https://www.lens.org/lens/search?q="
+    url <- paste0(lens_base, "%22", query, "%22", "&jo=true&j=EP&j=JP&j=US&j=WO&st=false&n=50")
+    out <- paste0(href, shQuote(url), close_href, label, close_a)
+  }
+  out
 }
     
 ## To be copied in the UI

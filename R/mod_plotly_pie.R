@@ -42,7 +42,7 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
   ns <- session$ns
   
   
-  plot <- reactiveValues(page_number = 1)
+  plot <- reactiveValues(page_number = 1, suspended = TRUE)
   
   
   preselected <- reactiveValues(default_fields = list(x=column_name), new_fields = list(Select_X=column_name))
@@ -54,12 +54,10 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
 
  
   output$plot <- renderPlotly({
-    print("pie")
     if(!is.null(preselected$new_fields$Select_X)){
       
       column_x <- preselected$new_fields$Select_X
-      dat <- data_reactive$data
-      
+
       chunk2 <- function(x,n) split(x, ceiling(seq_along(x)/n)) 
       a <- chunk2(unique(data_reactive$data[[preselected$new_fields$Select_X]]), 10)
       
@@ -71,13 +69,24 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
         data_reactive$data,
         data_reactive$data[[ preselected$new_fields$Select_X]] %in% a[[plot$page_number]])
       
+      if(plot$suspended) {
+        observer$resume()
+        plot$suspended <- FALSE
+      }
       
       future({
         dat <- as.data.frame(table("a"=temp_data[[column_x]]))
         dat
       }) %...>%
  
-      plot_ly(type='pie', labels=~a, values= ~Freq, key = ~a, showlegend = FALSE, source = ns("tab1")) %...>%
+      plot_ly(
+        type='pie',
+        labels=~a,
+        values= ~Freq, 
+        key = ~a, 
+        showlegend = FALSE,
+        source = ns("tab1")
+      ) %...>%
         layout(
           # title = preselected$new_fields$Select_X,
           paper_bgcolor = 'transparent',
@@ -176,7 +185,8 @@ mod_plotly_pie_server <- function(input, output, session, data_reactive, data_or
   })
   
   
-  observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, {
+  observer <- observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, suspended = TRUE, {
+    
     
     event <- event_data("plotly_click", source = ns("tab1"))
 

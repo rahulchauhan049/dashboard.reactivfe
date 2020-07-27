@@ -4,7 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny shinydashboard dashboardthemes shinyjs bdutilities.app
 #' @import plotly DT leaflet leaflet.extras sp shinyWidgets dplyr
-#' @import promises future
+#' @import promises future RColorBrewer
 #' @noRds
 
 future::plan(future::multiprocess)

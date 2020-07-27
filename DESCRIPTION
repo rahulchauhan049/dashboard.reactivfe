@@ -21,7 +21,8 @@ Imports:
     dplyr,
     pkgload,
     promises,
-    future
+    future,
+    RColorBrewer
 Remotes: 
     bd-R/bdutilities.app,
 Encoding: UTF-8

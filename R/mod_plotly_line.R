@@ -40,7 +40,7 @@ mod_plotly_line_ui <- function(id){
 mod_plotly_line_server <- function(input, output, session, data_reactive, data_original, column_name, column_name_y, type = "daily"){
   ns <- session$ns
   
-  plot <- reactiveValues(page_number = 1)
+  plot <- reactiveValues(page_number = 1, suspended = TRUE)
   
   
   preselected <- reactiveValues(default_fields = list(x=column_name, y=column_name_y), new_fields = list(Select_X=column_name, Select_Y=column_name_y))
@@ -51,37 +51,45 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
 
   
   output$plot <- renderPlotly({
-    print("line")
     if(!is.null(preselected$new_fields$Select_X)){
+      
+      
       
       data <- data_reactive$data
       column_1 <-  preselected$new_fields$Select_X
       column_2 <-  preselected$new_fields$Select_Y
       
       chunk2 <- function(x,n) split(x, ceiling(seq_along(x)/n)) 
-      a <- chunk2(unique(data_reactive$data[[preselected$new_fields$Select_X]]), 10)
+      a <- chunk2(unique(data_reactive$data[[preselected$new_fields$Select_X]]), 8)
       
       if(length(a) < plot$page_number){
         plot$page_number = 1
       }
       
+
+      
+      
       temp_data <-  filter(
         data_reactive$data,
         data_reactive$data[[ preselected$new_fields$Select_X]] %in% a[[plot$page_number]])
       
+      if(plot$suspended) {
+        observer$resume()
+        plot$suspended <- FALSE
+      }
       
       future({
         a <- list()
         data <- na.omit(temp_data[c(column_1, column_2)])
         for(i in unique(data[[column_1]])){
           dat <- filter(data, data[[column_1]]==i)
-          dat <- as.data.frame(table(dat[[column_2]])) 
+          dat <- data.frame(table(dat[[column_2]]), stringsAsFactors = FALSE) 
           dat <-  dat %>%
             mutate(cumsum = cumsum(Freq))
           a[[i]] <- dat
         }
       
-      pl <- plot_ly(type="scatter", source = ns("tab1"))
+      pl <- plot_ly(type="scatter", source = ns("tab1"), mode   = 'lines+markers')
       y_axis_column_name <- "Freq"
       if(type=="cumulative"){
         y_axis_column_name = "cumsum"
@@ -89,7 +97,7 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
         
       }
       for(i in names(a)){
-        pl <- add_trace(pl, x=a[[i]]$Var1,y=a[[i]][[y_axis_column_name]], mode = "lines+markers", name = i, key=i)
+        pl <- add_trace(pl, x=a[[i]]$Var1, y=a[[i]][[y_axis_column_name]], mode = "lines+markers", name = i, key=i)
       }
       
       pl %>%
@@ -213,7 +221,7 @@ mod_plotly_line_server <- function(input, output, session, data_reactive, data_o
   })
   
   
-  observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, {
+  observer <- observeEvent(event_data("plotly_click", source = ns("tab1")), ignoreNULL = FALSE, suspended = TRUE, {
     
     event <- event_data("plotly_click", source = ns("tab1"))
     
